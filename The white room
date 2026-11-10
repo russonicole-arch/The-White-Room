@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The White Room: Experiment</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            background-color: #050505;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 960px;
+            height: 100%;
+            max-height: 540px;
+            background-color: #000;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.2);
+            border: 1px solid #333;
+        }
+
+        #background {
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+        }
+
+        #sprite-container {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            height: 95%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            pointer-events: none;
+        }
+
+        #character-sprite {
+            height: 100%;
+            object-fit: contain;
+            transition: opacity 0.3s ease;
+        }
+
+        #dialogue-box {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 92%;
+            background: rgba(10, 10, 10, 0.9);
+            border: 1px solid #555;
+            padding: 20px;
+            color: #dcdcdc;
+            cursor: pointer;
+        }
+
+        #speaker-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #ff3333;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #dialogue-text {
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        #choices-container {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 75%;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            display: none;
+        }
+
+        .choice-btn {
+            background: #111;
+            color: #aaa;
+            border: 1px solid #444;
+            padding: 14px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .choice-btn:hover {
+            background: #222;
+            color: #fff;
+            border-color: #ff3333;
+            box-shadow: 0 0 10px rgba(255, 51, 51, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="background">
+            <div id="sprite-container">
+                <img id="character-sprite" src="" alt="Character">
+            </div>
+        </div>
+
+        <div id="choices-container"></div>
+
+        <div id="dialogue-box" onclick="gameEngine.next()">
+            <div id="speaker-name">SYSTEM</div>
+            <div id="dialogue-text">Tap anywhere to initialize observation...</div>
+        </div>
+    </div>
+
+    <script>
+        const story = {
+            start: [
+                { text: "Subject identification sequence complete. Age category: Child. Status: Confined.", speaker: "System Announcement", sprite: "" },
+                { text: "Fluorescent lights buzz overhead in a violent rhythm. The rainbow walls look sickly and sterile.", speaker: "Narrator", sprite: "" },
+                { text: "A towering unhuman figure wearing a white lab coat steps closely out from the glare.", speaker: "Narrator", sprite: "happy.png" },
+                { text: "Hello, little one..", speaker: "Woman", sprite: "happy.png" },
+                { 
+                    text: "Panic sets deep into your chest. Your lungs tighten under her intense gaze. What do you do?", 
+                    speaker: "Narrator", 
+                    sprite: "happy.png",
+                    choices: [
+                        { text: "Scream for help", nextNode: "route_scream" },
+                        { text: "Stay perfectly quiet", nextNode: "route_quiet" }
+                    ]
+                }
+            ],
+            route_scream: [
+                { text: "AAAAAAHHH—!!", speaker: "You", sprite: "happy.png" },
+                { text: "Before the sound can fully escape your throat, a freezing, rough hand violently clamps over your mouth from behind.", speaker: "Narrator", sprite: "surprised.png" },
+                { text: "Shh... Quiet down now.", speaker: "Unknown Voice", sprite: "surprised.png" },
+                { text: "The grip drops your pulse down into pure dread. The woman in front of you steps closer, her tilt worsening.", speaker: "Narrator", sprite: "closeup.png" },
+                { text: "Vocal panic signals an active rejection of testing environments. Increase dosage.", speaker: "Woman", sprite: "closeup.png" },
+                { 
+                    text: "The cold hand behind you slowly slips away, leaving a metallic taste in the air. She reaches into her white coat pocket.", 
+                    speaker: "Narrator", 
+                    sprite: "closeup.png",
+                    choices: [
+                        { text: "Grab her arm to stop her", nextNode: "grab_arm" },
+                        { text: "Back away into the corner", nextNode: "back_away" }
+                    ]
+                }
+            ],
+            route_quiet: [
+                { text: "You swallow your voice down, clenching your fists tightly until your knuckles bleed white.", speaker: "Narrator", sprite: "happy.png" },
+                { text: "Your silent, unlike most. Noted.", speaker: "Woman", sprite: "sad.png" },
+                { text: "She looks you down, scribbling a swift tally into a medical clipboard hovering near her side.", speaker: "Narrator", sprite: "sad.png" },
+                { text: "Compliance makes the physiological adjustments much less agonizing. Come closer.", speaker: "Woman", sprite: "happy.png" },
+                { 
+                    text: "She extends a gloved hand toward you. A distinct humming noise vibrates beneath the playroom flooring.", 
+                    speaker: "Narrator", 
+                    sprite: "happy.png",
+                    choices: [
+                        { text: "Take her hand blindly", nextNode: "take_hand" },
+                        { text: "Refuse and stand ground", nextNode: "stand_ground" }
+                    ]
+                }
+            ],
+            grab_arm: [
+                { text: "You lunge forward and desperately grab her wrist.", speaker: "Narrator", sprite: "surprised.png" },
+                { text: "How remarkably bold for a test subject.", speaker: "Woman", sprite: "surprised.png" },
+                { text: "Before you can pull away, the room spins upside down as security alarms begin to wail.", speaker: "Narrator", sprite: "surprised.png" },
+                { text: "End of Current Trial Phase.", speaker: "System Announcement", sprite: "", nextNode: "start" }
+            ],
+            back_away: [
+                { text: "You scramble backward until your spine hits the cold concrete base of the play structures.", speaker: "Narrator", sprite: "sad.png" },
+                { text: "There is nowhere to hide in a room without corners, little one.", speaker: "Woman", sprite: "happy.png" },
+                { text: "The lights suddenly shut off entirely, leaving you in the pitch black with the sound of crawling steps.", speaker: "Narrator", sprite: "", nextNode: "start" }
+            ],
+            take_hand: [
+                { text: "You place your trembling small hand inside her massive, freezing glove.", speaker: "Narrator", sprite: "happy.png" },
+                { text: "Good. The procedure will now commence smoothly.", speaker: "Woman", sprite: "happy.png" },
+                { text: "A sudden sharp sting hits your wrist, and the rainbow walls begin to dissolve into swirling static.", speaker: "Narrator", sprite: "closeup.png", nextNode: "start" }
+            ],
+            stand_ground: [
+                { text: "You freeze in place, refusing to move an inch toward her.", speaker: "Narrator", sprite: "sad.png" },
+                { text: "An error in submissive development. Unfortunate.", speaker: "Woman", sprite: "closeup.png" },
+                { text: "The hidden wall panels behind you shift open, exposing a dark conveyor shaft.", speaker: "Narrator", sprite: "closeup.png", nextNode: "start" }
+            ]
+        };
+
+        class VisualNovelEngine {
+            constructor(storyData) {
+                this.story = storyData;
+                this.currentNode = "start";
+                this.currentIndex = 0;
+            }
+
+            init() {
+                this.renderFrame();
+            }
+
+            getCurrentLine() {
+                return this.story[this.currentNode][this.currentIndex];
+            }
+
+            next() {
+                const currentLine = this.getCurrentLine();
+                if (currentLine && currentLine.choices) return;
+
+                this.currentIndex++;
+
+                if (this.currentIndex >= this.story[this.currentNode].length) {
+                    if (currentLine && currentLine.nextNode) {
+                        this.currentNode = currentLine.nextNode;
+                        this.currentIndex = 0;
+                    } else {
+                        this.currentNode = "start";
+                        this.currentIndex = 0;
+                    }
+                }
+                this.renderFrame();
+            }
+
